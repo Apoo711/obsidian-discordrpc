@@ -222,7 +222,8 @@ export default class ObsidianDiscordRPC extends Plugin {
         activity.state = "Working in a Vault";
       } else {
         activity.details = details;
-        activity.state = `${(await parsedText).toString()}`;
+        const calculatedState = await parsedText;
+        activity.state = calculatedState || `Vault: ${vault}`;
       }
 
       // if (this.settings.privacyMode) {
