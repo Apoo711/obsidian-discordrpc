@@ -1,8 +1,6 @@
 import {
 	App,
 	Plugin,
-	PluginSettingTab,
-	Setting,
 	moment,
 	TFile,
 	Notice
@@ -12,15 +10,17 @@ import {
 	DiscordRPCSettings,
 	DEFAULT_SETTINGS,
 	SettingTab,
-} from "./settings";
+} from "./src/settings";
 import {
 	StatusBar
-} from "./status-bar";
+} from "./src/status-bar";
 import {
 	Logger
-} from "./logger";
+} from "./src/logger";
 
-const clientId = "981203380192288788";
+const clientId = "1343184166354812979";
+const RECONNECT_INTERVAL = 5000; // 5 seconds
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 export default class NewDiscordRPC extends Plugin {
 	public settings: DiscordRPCSettings;
@@ -29,59 +29,121 @@ export default class NewDiscordRPC extends Plugin {
 	private logger: Logger;
 	private presence: Discord.Presence;
 	private currentFile: TFile;
+	private isConnected: boolean = false;
+	private reconnectTimeout: NodeJS.Timeout;
+	private reconnectAttempts: number = 0;
 
 	async onload() {
-		console.log("Loading Discord Rich Presence");
 		this.logger = new Logger();
+		this.logger.log("Loading Discord Rich Presence");
 
 		await this.loadSettings();
 
 		this.addSettingTab(new SettingTab(this.app, this));
-
-		this.rpc = new Discord.Client({
-			transport: "ipc"
-		});
-
 		this.statusBar = new StatusBar(this.addStatusBarItem());
+
+		this.initializeRpc();
 
 		this.registerEvent(
 			this.app.workspace.on("file-open", this.onFileOpen.bind(this))
 		);
 
 		this.registerInterval(
-			window.setInterval(async () => {
-				if (this.settings.showTime) {
-					await this.setActivity();
-				}
-			}, 1000)
+			window.setInterval(() => this.setActivity(), 1000)
 		);
 
 		this.addCommand({
 			id: "reconnect-to-discord",
 			name: "Reconnect to Discord",
-			callback: async () => {
-				if (!this.rpc) {
-					new Notice("Discord RPC client not initialized.");
-					return;
-				}
+			callback: () => {
 				new Notice("Reconnecting to Discord...");
-				await this.connectToDiscord();
+				this.reconnectAttempts = 0; // Reset attempts on manual reconnect
+				this.disconnect();
+				this.initializeRpc(); // Re-initialize the client
+				this.connectToDiscord();
 			},
 		});
 
-		try {
-			await this.connectToDiscord();
-		} catch (error) {
-			this.logger.error("Initial connection to Discord failed:", error);
-			new Notice("Initial connection to Discord failed. Please check the console for details.");
-		}
+		this.app.workspace.onLayoutReady(() => {
+			this.connectToDiscord();
+		});
 	}
 
 	onunload() {
-		console.log("Unloading Discord Rich Presence");
-		if (this.rpc) {
-			this.rpc.destroy();
+		this.logger.log("Unloading Discord Rich Presence");
+		this.disconnect();
+	}
+
+	initializeRpc() {
+		this.logger.log("Initializing RPC client.");
+		this.rpc = new Discord.Client({
+			transport: "ipc"
+		});
+
+		this.rpc.on("ready", () => {
+			this.isConnected = true;
+			this.reconnectAttempts = 0; // Reset attempts on successful connection
+			this.statusBar.update("Connected to Discord", true);
+			this.logger.log("Successfully connected to Discord RPC.");
+			this.setActivity();
+			if (this.reconnectTimeout) {
+				clearTimeout(this.reconnectTimeout);
+				this.reconnectTimeout = null;
+			}
+		});
+
+		this.rpc.on("disconnected", () => {
+			this.isConnected = false;
+			this.statusBar.update("Disconnected. Reconnecting...", false);
+			this.logger.warn("Disconnected from Discord RPC. Retrying...");
+			this.scheduleReconnect();
+		});
+	}
+
+	async connectToDiscord() {
+		if (this.isConnected || !this.rpc) return;
+
+		this.logger.log(`Connecting to Discord RPC... (Attempt ${this.reconnectAttempts + 1})`);
+		try {
+			await this.rpc.login({
+				clientId
+			});
+		} catch (err) {
+			this.isConnected = false;
+			this.statusBar.update("Connection failed. Retrying...", false);
+			// Enhanced error logging
+			this.logger.error("Full connection error object:", err);
+			this.scheduleReconnect();
 		}
+	}
+
+	scheduleReconnect() {
+		if (this.reconnectTimeout) return;
+
+		this.reconnectAttempts++;
+
+		if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+			this.logger.error(`Failed to connect after ${MAX_RECONNECT_ATTEMPTS} attempts. Giving up.`);
+			this.statusBar.update("Connection failed. Check Discord.", false);
+			return;
+		}
+
+		this.reconnectTimeout = setTimeout(() => {
+			this.reconnectTimeout = null;
+			this.connectToDiscord();
+		}, RECONNECT_INTERVAL);
+	}
+
+	disconnect() {
+		if (this.reconnectTimeout) {
+			clearTimeout(this.reconnectTimeout);
+			this.reconnectTimeout = null;
+		}
+		if (this.rpc) {
+			this.rpc.destroy().catch(err => this.logger.error("Error destroying RPC client:", err));
+			this.rpc = null;
+		}
+		this.isConnected = false;
 	}
 
 	async loadSettings() {
@@ -90,6 +152,7 @@ export default class NewDiscordRPC extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+		await this.setActivity();
 	}
 
 	async onFileOpen(file: TFile) {
@@ -97,58 +160,35 @@ export default class NewDiscordRPC extends Plugin {
 		await this.setActivity();
 	}
 
-	async connectToDiscord() {
-		if (!this.rpc) {
-			this.logger.warn("RPC client is not available.");
-			return;
-		}
-		try {
-			await this.rpc.login({
-				clientId
-			});
-			this.statusBar.update("Connected to Discord", true);
-			this.logger.log("Connected to Discord RPC.");
-			await this.setActivity();
-		} catch (err) {
-			this.statusBar.update("Could not connect to Discord", false);
-			this.logger.error("Failed to connect to Discord RPC:", err);
-			new Notice("Failed to connect to Discord. Is it running?");
-		}
-	}
-
 	async setActivity() {
-		if (!this.rpc) {
-			this.logger.warn("setActivity called, but RPC client is not available.");
+		if (!this.isConnected || !this.rpc) {
 			return;
 		}
 
 		const vaultName = this.app.vault.getName();
-		let presence: Discord.Presence = {
+		const startTimestamp = this.presence?.startTimestamp ?? moment().unix();
+
+		this.presence = {
 			largeImageKey: this.settings.largeImage,
-			largeImageText: this.settings.largeImageTooltip,
+			largeImageText: this.settings.largeImageTooltip.replace("{{vault}}", vaultName),
 			smallImageKey: this.settings.smallImage,
 			smallImageText: this.settings.smallImageTooltip,
-			details: this.settings.showVaultName ? `Vault: ${vaultName}` : undefined,
-			state: this.currentFile ? `Editing: ${this.currentFile.basename}` : "Browsing",
-			startTimestamp: this.settings.showTime ? this.presence?.startTimestamp ?? moment().unix() : undefined,
+			details: this.settings.showVaultName ? `Vault: ${vaultName}` : "Browsing in Obsidian",
+			state: "Idle",
+			startTimestamp: this.settings.showTime ? startTimestamp : undefined,
 		};
 
-		if (!this.settings.showCurrentFileName) {
-			presence.state = "Browsing";
+		if (this.currentFile && this.settings.showCurrentFileName) {
+			this.presence.state = this.settings.showFileExtension ?
+				`Editing: ${this.currentFile.name}` :
+				`Editing: ${this.currentFile.basename}`;
 		}
-
-		if (this.currentFile && this.settings.showFileExtension) {
-			presence.state = `Editing: ${this.currentFile.name}`;
-		}
-
-		this.presence = presence;
 
 		try {
 			await this.rpc.setActivity(this.presence);
-			this.logger.log("Activity updated.");
 		} catch (err) {
 			this.logger.error("Failed to set activity:", err);
-			new Notice("Failed to set Discord activity. Please try reconnecting.");
+			this.statusBar.update("Failed to set activity", false);
 		}
 	}
 }

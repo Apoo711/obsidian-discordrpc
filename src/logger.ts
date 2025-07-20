@@ -1,19 +1,15 @@
-import { Notice } from "obsidian";
-import ObsidianDiscordRPC from "./main";
-
 export class Logger {
-  plugin: ObsidianDiscordRPC = (this as any).plugin;
+	private prefix: string = "[Discord Rich Presence]:";
 
-  log(message: string, showPopups: boolean): void {
-    if (showPopups) {
-      new Notice(message);
-    }
+	public log(message: string, ...optionalParams: any[]) {
+		console.log(this.prefix, message, ...optionalParams);
+	}
 
-    console.log(`discordrpc: ${message}`);
-  }
+	public warn(message: string, ...optionalParams: any[]) {
+		console.warn(this.prefix, message, ...optionalParams);
+	}
 
-  logIgnoreNoNotice(message: string): void {
-    new Notice(message);
-    console.log(`discordrpc: ${message}`);
-  }
+	public error(message: string, ...optionalParams: any[]) {
+		console.error(this.prefix, message, ...optionalParams);
+	}
 }
