@@ -1,36 +1,32 @@
 {
-  "name": "obsidian-discordrpc",
-  "version": "2.2.3",
-  "description": "Update your Discord Status to show your friends what you are working on in Obsidian. With Discord Rich Presence.",
-  "main": "Release/main.js",
-  "scripts": {
-    "dev": "rollup --config rollup.config.js -w --bundleConfigAsCjs",
-    "build": "rollup --config rollup.config.js --bundleConfigAsCjs",
-    "release": "standard-version --bundleConfigAsCjs"
-  },
-  "keywords": [
-    "obsidian",
-    "obsidianmd",
-    "discord",
-    "discord-rpc"
-  ],
-  "author": "Luke Leppan, Apoo711",
-  "license": "MIT",
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-typescript": "^12.1.2",
-    "@types/node": "^22.13.5",
-    "obsidian": "https://github.com/obsidianmd/obsidian-api/tarball/master",
-    "rollup": "^4.34.8",
-    "rollup-plugin-copy": "^3.5.0",
-    "standard-version": "^9.5.0",
-    "tslib": "^2.8.1",
-    "typescript": "^5.7.3"
-  },
-  "dependencies": {
-    "@types/discord-rpc": "^4.0.8",
-    "discord-rpc": "^4.0.1"
-  }
+	"name": "new-discordrpc",
+	"version": "3.0.0",
+	"description": "Update your Discord status with your current vault and file.",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"version": "node version-bump.mjs && git add manifest.json versions.json"
+	},
+	"keywords": [
+		"obsidian",
+		"discord",
+		"rpc"
+	],
+	"author": "Aryan Gupta",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.12.12",
+		"@typescript-eslint/eslint-plugin": "^7.10.0",
+		"@typescript-eslint/parser": "^7.10.0",
+		"builtin-modules": "^3.3.0",
+		"esbuild": "^0.21.4",
+		"obsidian": "latest",
+		"tslib": "^2.6.2",
+		"typescript": "^5.4.5"
+	},
+	"dependencies": {
+		"@types/discord-rpc": "^4.0.9",
+		"discord-rpc": "^4.0.1"
+	}
 }
