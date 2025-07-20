@@ -2,25 +2,23 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import NewDiscordRPC from "./main";
 
 export interface DiscordRPCSettings {
-	showVaultName: boolean;
-	showCurrentFileName: boolean;
-	showFileExtension: boolean;
+	details: string;
+	state: string;
+	largeImageTooltip: string;
+	smallImageTooltip: string;
 	showTime: boolean;
 	largeImage: string;
-	largeImageTooltip: string;
 	smallImage: string;
-	smallImageTooltip: string;
 }
 
 export const DEFAULT_SETTINGS: DiscordRPCSettings = {
-	showVaultName: true,
-	showCurrentFileName: true,
-	showFileExtension: false,
+	details: "Vault: {{vault}}",
+	state: "Editing: {{fileName}}",
+	largeImageTooltip: "Obsidian - {{vault}}",
+	smallImageTooltip: "{{fileExtension}}",
 	showTime: true,
 	largeImage: "obsidian-logo",
-	largeImageTooltip: "Obsidian",
 	smallImage: "file",
-	smallImageTooltip: "Editing a file",
 };
 
 export class SettingTab extends PluginSettingTab {
@@ -36,42 +34,59 @@ export class SettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl("h2", { text: "Discord Rich Presence Settings" });
 
+		containerEl.createEl("p", {
+			text: "Use placeholders to customize the text. Available placeholders: {{vault}}, {{fileName}}, {{fileExtension}}",
+		});
+
 		new Setting(containerEl)
-			.setName("Show vault name")
-			.setDesc("Display the name of the current vault.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showVaultName)
+			.setName("Details")
+			.setDesc("The first line of text in the presence.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., Vault: {{vault}}")
+					.setValue(this.plugin.settings.details)
 					.onChange(async (value) => {
-						this.plugin.settings.showVaultName = value;
+						this.plugin.settings.details = value;
 						await this.plugin.saveSettings();
-						await this.plugin.setActivity();
 					})
 			);
 
 		new Setting(containerEl)
-			.setName("Show current file name")
-			.setDesc("Display the name of the currently open file.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showCurrentFileName)
+			.setName("State")
+			.setDesc("The second line of text in the presence.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., Editing: {{fileName}}")
+					.setValue(this.plugin.settings.state)
 					.onChange(async (value) => {
-						this.plugin.settings.showCurrentFileName = value;
+						this.plugin.settings.state = value;
 						await this.plugin.saveSettings();
-						await this.plugin.setActivity();
 					})
 			);
 
 		new Setting(containerEl)
-			.setName("Show file extension")
-			.setDesc("Display the file extension of the currently open file.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showFileExtension)
+			.setName("Large Image Tooltip")
+			.setDesc("The text that appears when hovering over the large image.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., Obsidian - {{vault}}")
+					.setValue(this.plugin.settings.largeImageTooltip)
 					.onChange(async (value) => {
-						this.plugin.settings.showFileExtension = value;
+						this.plugin.settings.largeImageTooltip = value;
 						await this.plugin.saveSettings();
-						await this.plugin.setActivity();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Small Image Tooltip")
+			.setDesc("The text that appears when hovering over the small image.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., {{fileExtension}}")
+					.setValue(this.plugin.settings.smallImageTooltip)
+					.onChange(async (value) => {
+						this.plugin.settings.smallImageTooltip = value;
+						await this.plugin.saveSettings();
 					})
 			);
 
@@ -82,7 +97,6 @@ export class SettingTab extends PluginSettingTab {
 				toggle.setValue(this.plugin.settings.showTime).onChange(async (value) => {
 					this.plugin.settings.showTime = value;
 					await this.plugin.saveSettings();
-					await this.plugin.setActivity();
 				})
 			);
 	}
