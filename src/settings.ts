@@ -9,16 +9,18 @@ export interface DiscordRPCSettings {
 	showTime: boolean;
 	largeImage: string;
 	smallImage: string;
+	idleTimeout: number;
 }
 
 export const DEFAULT_SETTINGS: DiscordRPCSettings = {
 	details: "Vault: {{vault}}",
 	state: "Editing: {{fileName}}",
 	largeImageTooltip: "Obsidian - {{vault}}",
-	smallImageTooltip: "{{fileExtension}}",
+	smallImageTooltip: "{{fileExtension}} file",
 	showTime: true,
 	largeImage: "obsidian-logo",
 	smallImage: "file",
+	idleTimeout: 5,
 };
 
 export class SettingTab extends PluginSettingTab {
@@ -96,6 +98,19 @@ export class SettingTab extends PluginSettingTab {
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.showTime).onChange(async (value) => {
 					this.plugin.settings.showTime = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Idle Timeout (minutes)")
+			.setDesc("Time in minutes before showing as idle.")
+			.addSlider(slider => slider
+				.setLimits(1, 60, 1)
+				.setValue(this.plugin.settings.idleTimeout)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.idleTimeout = value;
 					await this.plugin.saveSettings();
 				})
 			);

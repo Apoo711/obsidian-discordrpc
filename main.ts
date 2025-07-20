@@ -32,6 +32,7 @@ export default class NewDiscordRPC extends Plugin {
 	private isConnected: boolean = false;
 	private reconnectTimeout: NodeJS.Timeout;
 	private reconnectAttempts: number = 0;
+	private lastActive: number = Date.now();
 
 	async onload() {
 		this.logger = new Logger();
@@ -44,12 +45,13 @@ export default class NewDiscordRPC extends Plugin {
 
 		this.initializeRpc();
 
-		this.registerEvent(
-			this.app.workspace.on("file-open", this.onFileOpen.bind(this))
-		);
+		// Register activity listeners
+		this.registerDomEvent(document, 'mousemove', () => this.updateLastActive());
+		this.registerDomEvent(document, 'keydown', () => this.updateLastActive());
+		this.registerEvent(this.app.workspace.on("file-open", this.onFileOpen.bind(this)));
 
 		this.registerInterval(
-			window.setInterval(() => this.setActivity(), 1000)
+			window.setInterval(() => this.setActivity(), 15000) // Update every 15 seconds
 		);
 
 		this.addCommand({
@@ -57,9 +59,9 @@ export default class NewDiscordRPC extends Plugin {
 			name: "Reconnect to Discord",
 			callback: () => {
 				new Notice("Reconnecting to Discord...");
-				this.reconnectAttempts = 0; // Reset attempts on manual reconnect
+				this.reconnectAttempts = 0;
 				this.disconnect();
-				this.initializeRpc(); // Re-initialize the client
+				this.initializeRpc();
 				this.connectToDiscord();
 			},
 		});
@@ -74,6 +76,10 @@ export default class NewDiscordRPC extends Plugin {
 		this.disconnect();
 	}
 
+	updateLastActive() {
+		this.lastActive = Date.now();
+	}
+
 	initializeRpc() {
 		this.logger.log("Initializing RPC client.");
 		this.rpc = new Discord.Client({
@@ -82,7 +88,7 @@ export default class NewDiscordRPC extends Plugin {
 
 		this.rpc.on("ready", () => {
 			this.isConnected = true;
-			this.reconnectAttempts = 0; // Reset attempts on successful connection
+			this.reconnectAttempts = 0;
 			this.statusBar.update("Connected to Discord", true);
 			this.logger.log("Successfully connected to Discord RPC.");
 			this.setActivity();
@@ -111,7 +117,6 @@ export default class NewDiscordRPC extends Plugin {
 		} catch (err) {
 			this.isConnected = false;
 			this.statusBar.update("Connection failed. Retrying...", false);
-			// Enhanced error logging
 			this.logger.error("Full connection error object:", err);
 			this.scheduleReconnect();
 		}
@@ -119,15 +124,12 @@ export default class NewDiscordRPC extends Plugin {
 
 	scheduleReconnect() {
 		if (this.reconnectTimeout) return;
-
 		this.reconnectAttempts++;
-
 		if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.logger.error(`Failed to connect after ${MAX_RECONNECT_ATTEMPTS} attempts. Giving up.`);
 			this.statusBar.update("Connection failed. Check Discord.", false);
 			return;
 		}
-
 		this.reconnectTimeout = setTimeout(() => {
 			this.reconnectTimeout = null;
 			this.connectToDiscord();
@@ -156,8 +158,20 @@ export default class NewDiscordRPC extends Plugin {
 	}
 
 	async onFileOpen(file: TFile) {
+		this.updateLastActive();
 		this.currentFile = file;
 		await this.setActivity();
+	}
+
+	parsePlaceholders(text: string): string {
+		const vaultName = this.app.vault.getName();
+		const fileName = this.currentFile ? this.currentFile.basename : "No file open";
+		const fileExtension = this.currentFile ? this.currentFile.extension : "";
+
+		return text
+			.replace(/{{vault}}/g, vaultName)
+			.replace(/{{fileName}}/g, fileName)
+			.replace(/{{fileExtension}}/g, fileExtension);
 	}
 
 	async setActivity() {
@@ -165,23 +179,36 @@ export default class NewDiscordRPC extends Plugin {
 			return;
 		}
 
-		const vaultName = this.app.vault.getName();
+		const idleTimeoutMs = this.settings.idleTimeout * 60 * 1000;
+		const isIdle = Date.now() - this.lastActive > idleTimeoutMs;
+
 		const startTimestamp = this.presence?.startTimestamp ?? moment().unix();
 
 		this.presence = {
 			largeImageKey: this.settings.largeImage,
-			largeImageText: this.settings.largeImageTooltip.replace("{{vault}}", vaultName),
 			smallImageKey: this.settings.smallImage,
-			smallImageText: this.settings.smallImageTooltip,
-			details: this.settings.showVaultName ? `Vault: ${vaultName}` : "Browsing in Obsidian",
-			state: "Idle",
 			startTimestamp: this.settings.showTime ? startTimestamp : undefined,
 		};
 
-		if (this.currentFile && this.settings.showCurrentFileName) {
-			this.presence.state = this.settings.showFileExtension ?
-				`Editing: ${this.currentFile.name}` :
-				`Editing: ${this.currentFile.basename}`;
+		if (isIdle) {
+			this.presence.details = "Idling...";
+			this.presence.state = undefined;
+			this.presence.smallImageText = "Away from keyboard";
+		} else {
+			let detailsText = this.parsePlaceholders(this.settings.details).trim();
+			if (!detailsText) {
+				detailsText = "In a Vault";
+			}
+
+			let stateText = this.parsePlaceholders(this.settings.state).trim();
+			if (!stateText) {
+				stateText = this.currentFile ? "Editing a file" : "Browsing files";
+			}
+
+			this.presence.details = detailsText;
+			this.presence.state = stateText;
+			this.presence.largeImageText = this.parsePlaceholders(this.settings.largeImageTooltip);
+			this.presence.smallImageText = this.parsePlaceholders(this.settings.smallImageTooltip);
 		}
 
 		try {
