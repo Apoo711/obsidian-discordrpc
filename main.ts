@@ -24,13 +24,13 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 
 export default class NewDiscordRPC extends Plugin {
 	public settings: DiscordRPCSettings;
-	private rpc: Discord.Client;
+	private rpc: Discord.Client | null;
 	private statusBar: StatusBar;
 	private logger: Logger;
 	private presence: Discord.Presence;
 	private currentFile: TFile;
 	private isConnected: boolean = false;
-	private reconnectTimeout: NodeJS.Timeout;
+	private reconnectTimeout: NodeJS.Timeout | null;
 	private reconnectAttempts: number = 0;
 	private lastActive: number = Date.now();
 
