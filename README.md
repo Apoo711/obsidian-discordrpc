@@ -1,68 +1,49 @@
-# Custom RPC
+# Obsidian Discord Rich Presence
+A plugin for [Obsidian](https://obsidian.md/) that displays your current activity as a rich presence status in Discord.
 
-## My Fork
+## Features
+- **Show Your Work:** Displays your current vault name and the file you're editing in your Discord status.
 
-I noticed the original plugin wasnt being maintained! So i decided to create my own fork that I'll try to update!
+- **Highly Customizable:** Use placeholders to create custom status messages that fit your workflow.
 
-If you find any issues or have any suggestions, please report them in the discussions post.
+- **Idle Detection:** Automatically shows you as "Idling" after a configurable period of inactivity.
 
-### Installing
+- **Time Tracking:** Shows how long you've been working in your current session.
 
-I'm not sure how BRAT works so for now you'll have to do it manually.
+## Installation
+1. Go to the [Releases page](https://github.com/Apoo711/obsidian-discordrpc/releases) of this repository.
 
-- Go to the install folder
-- Download main.js and manifest.json
-- put em in a folder in your .obsidian/plugins folder
-- You'll notice the plugin is under a different name
-- Just enable it.
+2. Under the latest release, download the `main.js` and `manifest.json` files.
 
-### TODO
+3. In your Obsidian vault, go to `Settings` > `Community plugins`.
 
-- Finish up Folder Names
-- Add a way to include custom strings in the status.
+4. Make sure "Restricted mode" is turned off.
 
-### Usage
+5. Click the "folder" icon to open your vault's plugins folder (`YourVault/.obsidian/plugins/`).
 
-After enabling the plugin in settings, your Discord status should show that you are using Obsidian.md.
+6. Create a new folder named `new-discordrpc`.
 
-If Discord isn't open, then you will see "Reconnect to Discord" at the botton of the screen. You can click that to attempt to reconnect. It will only connect if Discord is open.
+7. Copy the downloaded `main.js` and `manifest.json` files into this new folder.
 
-You can also reconnect to discord rich presence via the `Reconnect to Discord` command in the command palette. If there is an issue.
+8. Return to Obsidian, go back to `Settings` > `Community plugins`, and click the "refresh" button.
 
-### Features
+9. Find "New Discord RPC" in the list and enable it.
 
-- Updates your Discord Status with Obsidian info, **Vault Name** and/or **Current File Name**.
-- Allows you to customise what info is shown.
+## Configuration
+The plugin's settings can be found in `Settings` > `Community Plugins` > `New Discord RPC`.
 
-### Settings
+### Placeholders
+You can use the following placeholders in the Details, State, and tooltip fields to customize the presence text:
 
-#### Privacy Settings
+{{vault}}: The name of your current vault.
 
-##### Folder Name Settings
+{{fileName}}: The name of the file you are currently editing (without the extension).
 
-- Toggle whether or not to show **Folder Name**
+{{fileExtension}}: The extension of the file you are currently editing (e.g., md).
 
-##### Vault Name Settings
+## Contributing
 
-- Toggle whether or not to show **Vault Name**
-- Set a custom **Vault Name** to show publicly
+Contributions are welcome! If you have ideas for new features or have found a bug, please feel free to open an issue or submit a pull request.
 
-##### File Name Settings
-
-- Toggle whether or not to show **Current File Name**
-- Toggle whether or not to show the current file **extension**
-
-#### Time Settings
-
-- Toggle Whether or not to use the total time you have been using Obsidian, instead of the time spent editing a single file.
-
-#### Notice Settings
-
-- Toggle whether or not to show **Connection Notices**
-
-### Contributors
-
-#### @leoccyao
-
-- Added the disconnect feature
-- Made the plugin much more user friendly
+## License
+This plugin is licensed under the MIT License.
