@@ -1,6 +1,8 @@
 # Obsidian Discord Rich Presence
 A plugin for Obsidian that displays your current activity as a rich presence status in Discord.
 
+![Presence on Discord](assets/presence.gif)
+
 Features
 * **Show Your Work**: Displays your current vault name and the file you're editing in your Discord status.
 * **Highly Customizable**: Use placeholders to create custom status messages that fit your workflow.
