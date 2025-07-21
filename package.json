@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"lint": "eslint src/**/*.ts",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [
@@ -13,7 +14,7 @@
 		"discord",
 		"rpc"
 	],
-	"author": "Aryan Gupta",
+	"author": "Apoorv Gupta",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^20.12.12",
@@ -26,7 +27,6 @@
 		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"@types/discord-rpc": "^4.0.9",
 		"discord-rpc": "^4.0.1"
 	}
 }
