@@ -1,8 +1,7 @@
-/*
+.status-bar-item.plugin-new-discordrpc .discord-rpc-connected {
+	color: var(--color-green);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+.status-bar-item.plugin-new-discordrpc .discord-rpc-disconnected {
+	color: var(--color-red);
+}

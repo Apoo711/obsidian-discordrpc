@@ -3,7 +3,8 @@ import {
 	Plugin,
 	moment,
 	TFile,
-	Notice
+	Notice,
+	MarkdownView
 } from "obsidian";
 import * as Discord from "discord-rpc";
 import {
@@ -64,6 +65,16 @@ export default class NewDiscordRPC extends Plugin {
 				this.initializeRpc();
 				this.connectToDiscord();
 			},
+		});
+
+		this.addCommand({
+			id: "toggle-privacy-mode",
+			name: "Toggle Privacy Mode",
+			callback: async () => {
+				this.settings.privacyModeEnabled = !this.settings.privacyModeEnabled;
+				await this.saveSettings();
+				new Notice(`Privacy Mode ${this.settings.privacyModeEnabled ? "enabled" : "disabled"}.`);
+			}
 		});
 
 		this.app.workspace.onLayoutReady(() => {
@@ -163,15 +174,41 @@ export default class NewDiscordRPC extends Plugin {
 		await this.setActivity();
 	}
 
-	parsePlaceholders(text: string): string {
-		const vaultName = this.app.vault.getName();
-		const fileName = this.currentFile ? this.currentFile.basename : "No file open";
-		const fileExtension = this.currentFile ? this.currentFile.extension : "";
+	async parsePlaceholders(text: string): Promise<string> {
+		if (!text) return "";
 
-		return text
-			.replace(/{{vault}}/g, vaultName)
-			.replace(/{{fileName}}/g, fileName)
-			.replace(/{{fileExtension}}/g, fileExtension);
+		let parsedText = text;
+
+		// Vault placeholders
+		parsedText = parsedText.replace(/{{vault}}/g, this.app.vault.getName());
+		parsedText = parsedText.replace(/{{noteCount}}/g, this.app.vault.getMarkdownFiles().length.toString());
+
+		// File-specific placeholders
+		if (this.currentFile) {
+			parsedText = parsedText.replace(/{{fileName}}/g, this.currentFile.basename);
+			parsedText = parsedText.replace(/{{fileExtension}}/g, this.currentFile.extension);
+			parsedText = parsedText.replace(/{{filePath}}/g, this.currentFile.path);
+			parsedText = parsedText.replace(/{{folder}}/g, this.currentFile.parent.name);
+			parsedText = parsedText.replace(/{{creationDate}}/g, moment(this.currentFile.stat.ctime).format("YYYY-MM-DD"));
+
+			// Content-based placeholders (word and character count)
+			if (parsedText.includes("{{wordCount}}") || parsedText.includes("{{charCount}}")) {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+				if (view && view.file === this.currentFile) {
+					const content = view.editor.getValue();
+					const wordCount = (content.match(/\S+/g) || []).length;
+					const charCount = content.length;
+					parsedText = parsedText.replace(/{{wordCount}}/g, wordCount.toString());
+					parsedText = parsedText.replace(/{{charCount}}/g, charCount.toString());
+				}
+			}
+		} else {
+			// Replace file-specific placeholders with defaults if no file is open
+			const filePlaceholders = /{{fileName}}|{{fileExtension}}|{{filePath}}|{{folder}}|{{creationDate}}|{{wordCount}}|{{charCount}}/g;
+			parsedText = parsedText.replace(filePlaceholders, "N/A");
+		}
+
+		return parsedText;
 	}
 
 	async setActivity() {
@@ -181,6 +218,7 @@ export default class NewDiscordRPC extends Plugin {
 
 		const idleTimeoutMs = this.settings.idleTimeout * 60 * 1000;
 		const isIdle = Date.now() - this.lastActive > idleTimeoutMs;
+		const usePrivacyMode = this.settings.privacyModeEnabled || isIdle;
 
 		const startTimestamp = this.presence?.startTimestamp ?? moment().unix();
 
@@ -190,25 +228,26 @@ export default class NewDiscordRPC extends Plugin {
 			startTimestamp: this.settings.showTime ? startTimestamp : undefined,
 		};
 
-		if (isIdle) {
-			this.presence.details = "Idling...";
-			this.presence.state = undefined;
-			this.presence.smallImageText = "Away from keyboard";
+		if (usePrivacyMode) {
+			this.presence.details = this.settings.privacyModeDetails;
+			this.presence.state = this.settings.privacyModeState;
+			this.presence.smallImageText = isIdle ? "Away from keyboard" : "Privacy Mode Enabled";
+			this.presence.largeImageText = "Keeping things private...";
 		} else {
-			let detailsText = this.parsePlaceholders(this.settings.details).trim();
+			let detailsText = (await this.parsePlaceholders(this.settings.details)).trim();
 			if (!detailsText) {
 				detailsText = "In a Vault";
 			}
 
-			let stateText = this.parsePlaceholders(this.settings.state).trim();
+			let stateText = (await this.parsePlaceholders(this.settings.state)).trim();
 			if (!stateText) {
 				stateText = this.currentFile ? "Editing a file" : "Browsing files";
 			}
 
 			this.presence.details = detailsText;
 			this.presence.state = stateText;
-			this.presence.largeImageText = this.parsePlaceholders(this.settings.largeImageTooltip);
-			this.presence.smallImageText = this.parsePlaceholders(this.settings.smallImageTooltip);
+			this.presence.largeImageText = await this.parsePlaceholders(this.settings.largeImageTooltip);
+			this.presence.smallImageText = await this.parsePlaceholders(this.settings.smallImageTooltip);
 		}
 
 		try {

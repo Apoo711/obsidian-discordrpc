@@ -10,6 +10,9 @@ export interface DiscordRPCSettings {
 	largeImage: string;
 	smallImage: string;
 	idleTimeout: number;
+	privacyModeEnabled: boolean;
+	privacyModeDetails: string;
+	privacyModeState: string;
 }
 
 export const DEFAULT_SETTINGS: DiscordRPCSettings = {
@@ -21,6 +24,9 @@ export const DEFAULT_SETTINGS: DiscordRPCSettings = {
 	largeImage: "obsidian-logo",
 	smallImage: "file",
 	idleTimeout: 5,
+	privacyModeEnabled: false,
+	privacyModeDetails: "Browsing...",
+	privacyModeState: "Keeping secrets",
 };
 
 export class SettingTab extends PluginSettingTab {
@@ -36,9 +42,22 @@ export class SettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl("h2", { text: "Discord Rich Presence Settings" });
 
-		containerEl.createEl("p", {
-			text: "Use placeholders to customize the text. Available placeholders: {{vault}}, {{fileName}}, {{fileExtension}}",
-		});
+		// --- General Settings ---
+		containerEl.createEl("h3", { text: "General Settings" });
+
+		const placeholderDesc = containerEl.createEl("p");
+		placeholderDesc.innerHTML = `
+            Use placeholders to customize the text. Available placeholders:
+            <br><b>{{vault}}</b>: Name of the vault
+            <br><b>{{noteCount}}</b>: Total number of notes in the vault
+            <br><b>{{fileName}}</b>: Name of the current file
+            <br><b>{{fileExtension}}</b>: Extension of the current file
+            <br><b>{{filePath}}</b>: Path of the current file
+            <br><b>{{folder}}</b>: Name of the parent folder
+            <br><b>{{creationDate}}</b>: Creation date of the current file
+            <br><b>{{wordCount}}</b>: Word count of the current file
+            <br><b>{{charCount}}</b>: Character count of the current file
+        `;
 
 		new Setting(containerEl)
 			.setName("Details")
@@ -100,6 +119,45 @@ export class SettingTab extends PluginSettingTab {
 					this.plugin.settings.showTime = value;
 					await this.plugin.saveSettings();
 				})
+			);
+
+		// --- Idle & Privacy Settings ---
+		containerEl.createEl("h3", { text: "Idle & Privacy Settings" });
+
+		new Setting(containerEl)
+			.setName("Privacy Mode")
+			.setDesc("Hides your vault and file details, showing a generic status instead. Can also be toggled with a command.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.privacyModeEnabled).onChange(async (value) => {
+					this.plugin.settings.privacyModeEnabled = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Idle/Privacy Details")
+			.setDesc("The first line of text to show when idle or in privacy mode.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., Browsing...")
+					.setValue(this.plugin.settings.privacyModeDetails)
+					.onChange(async (value) => {
+						this.plugin.settings.privacyModeDetails = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Idle/Privacy State")
+			.setDesc("The second line of text to show when idle or in privacy mode.")
+			.addText((text) =>
+				text
+					.setPlaceholder("e.g., Keeping secrets")
+					.setValue(this.plugin.settings.privacyModeState)
+					.onChange(async (value) => {
+						this.plugin.settings.privacyModeState = value;
+						await this.plugin.saveSettings();
+					})
 			);
 
 		new Setting(containerEl)
