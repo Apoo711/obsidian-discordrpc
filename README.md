@@ -35,11 +35,11 @@ The plugin's settings can be found in `Settings` > `Community Plugins` > `New Di
 ### Placeholders
 You can use the following placeholders in the Details, State, and tooltip fields to customize the presence text:
 
-{{vault}}: The name of your current vault.
+`{{vault}}`: The name of your current vault.
 
-{{fileName}}: The name of the file you are currently editing (without the extension).
+`{{fileName}}`: The name of the file you are currently editing (without the extension).
 
-{{fileExtension}}: The extension of the file you are currently editing (e.g., md).
+`{{fileExtension}}`: The extension of the file you are currently editing (e.g., md).
 
 ## Contributing
 
