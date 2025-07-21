@@ -55,5 +55,8 @@ You can use the following placeholders in the `Details`, `State`, and tooltip fi
 ## Contributing
 Contributions are welcome! If you have ideas for new features or have found a bug, please feel free to open an issue or submit a pull request.
 
+## Acknowledgements
+Special thanks to lukeleppan, the creator of the original [Obsidian-DiscordRPC plugin](https://github.com/lukeleppan/obsidian-discordrpc), which served as the inspiration for this new version.
+
 ## License
 This plugin is licensed under the [MIT License](LICENSE).
