@@ -185,7 +185,8 @@ export default class NewDiscordRPC extends Plugin {
 
 		// File-specific placeholders
 		if (this.currentFile) {
-			const folderName = this.currentFile.parent.isRoot() ? "Vault Root" : this.currentFile.parent.name;
+			const parent = this.currentFile.parent;
+			const folderName = (parent && parent.isRoot()) ? "Vault Root" : (parent?.name || "Vault Root");
 			parsedText = parsedText.replace(/{{folder}}/g, folderName);
 
 			parsedText = parsedText.replace(/{{fileName}}/g, this.currentFile.basename);
