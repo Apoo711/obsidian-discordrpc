@@ -40,10 +40,9 @@ export class SettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Discord Rich Presence Settings" });
 
 		// --- General Settings ---
-		containerEl.createEl("h3", { text: "General Settings" });
+		new Setting(containerEl).setName("General settings").setHeading();
 
 		const placeholderDesc = containerEl.createEl("p");
 		placeholderDesc.innerHTML = `
@@ -86,7 +85,7 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Large Image Tooltip")
+			.setName("Large image tooltip")
 			.setDesc("The text that appears when hovering over the large image.")
 			.addText((text) =>
 				text
@@ -99,7 +98,7 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Small Image Tooltip")
+			.setName("Small image tooltip")
 			.setDesc("The text that appears when hovering over the small image.")
 			.addText((text) =>
 				text
@@ -122,10 +121,10 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		// --- Idle & Privacy Settings ---
-		containerEl.createEl("h3", { text: "Idle & Privacy Settings" });
+		new Setting(containerEl).setName("Idle & privacy settings").setHeading();
 
 		new Setting(containerEl)
-			.setName("Privacy Mode")
+			.setName("Privacy mode")
 			.setDesc("Hides your vault and file details, showing a generic status instead. Can also be toggled with a command.")
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.privacyModeEnabled).onChange(async (value) => {
@@ -135,7 +134,7 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Idle/Privacy Details")
+			.setName("Idle/privacy details")
 			.setDesc("The first line of text to show when idle or in privacy mode.")
 			.addText((text) =>
 				text
@@ -148,7 +147,7 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Idle/Privacy State")
+			.setName("Idle/privacy state")
 			.setDesc("The second line of text to show when idle or in privacy mode.")
 			.addText((text) =>
 				text
@@ -161,7 +160,7 @@ export class SettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Idle Timeout (minutes)")
+			.setName("Idle timeout (minutes)")
 			.setDesc("Time in minutes before showing as idle.")
 			.addSlider(slider => slider
 				.setLimits(1, 60, 1)

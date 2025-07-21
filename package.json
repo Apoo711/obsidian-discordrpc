@@ -1,7 +1,7 @@
 {
 	"name": "new-discordrpc",
 	"version": "3.1.0",
-	"description": "Update your Discord status with your current vault and file.",
+	"description": "Update your discord status with your current vault and file.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

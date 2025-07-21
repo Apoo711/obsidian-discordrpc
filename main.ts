@@ -57,7 +57,7 @@ export default class NewDiscordRPC extends Plugin {
 
 		this.addCommand({
 			id: "reconnect-to-discord",
-			name: "Reconnect to Discord",
+			name: "Reconnect to discord",
 			callback: () => {
 				new Notice("Reconnecting to Discord...");
 				this.reconnectAttempts = 0;
@@ -69,11 +69,11 @@ export default class NewDiscordRPC extends Plugin {
 
 		this.addCommand({
 			id: "toggle-privacy-mode",
-			name: "Toggle Privacy Mode",
+			name: "Toggle privacy mode",
 			callback: async () => {
 				this.settings.privacyModeEnabled = !this.settings.privacyModeEnabled;
 				await this.saveSettings();
-				new Notice(`Privacy Mode ${this.settings.privacyModeEnabled ? "enabled" : "disabled"}.`);
+				new Notice(`Privacy mode ${this.settings.privacyModeEnabled ? "enabled" : "disabled"}.`);
 			}
 		});
 

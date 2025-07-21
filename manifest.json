@@ -3,7 +3,7 @@
 	"name": "New Discord RPC",
 	"version": "3.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Update your Discord status with your current vault and file.",
+	"description": "Update your discord status with your current vault and file.",
 	"author": "Aryan Gupta",
 	"authorUrl": "https://aryan-gupta.is-a.dev",
 	"isDesktopOnly": true
