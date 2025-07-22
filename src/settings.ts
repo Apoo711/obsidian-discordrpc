@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type NewDiscordRPC from "main";
+import type NewDiscordRPC from "./main";
 
 export interface DiscordRPCSettings {
 	details: string;
@@ -44,19 +44,26 @@ export class SettingTab extends PluginSettingTab {
 		// --- General Settings ---
 		new Setting(containerEl).setName("General settings").setHeading();
 
-		const placeholderDesc = containerEl.createEl("p");
-		placeholderDesc.innerHTML = `
-            Use placeholders to customize the text. Available placeholders:
-            <br><b>{{vault}}</b>: Name of the vault
-            <br><b>{{noteCount}}</b>: Total number of notes in the vault
-            <br><b>{{fileName}}</b>: Name of the current file
-            <br><b>{{fileExtension}}</b>: Extension of the current file
-            <br><b>{{filePath}}</b>: Path of the current file
-            <br><b>{{folder}}</b>: Name of the parent folder
-            <br><b>{{creationDate}}</b>: Creation date of the current file
-            <br><b>{{wordCount}}</b>: Word count of the current file
-            <br><b>{{charCount}}</b>: Character count of the current file
-        `;
+		const placeholderDesc = containerEl.createEl("p", { text: "Use placeholders to customize the text. Available placeholders:" });
+		const placeholderList = placeholderDesc.createEl("ul", { cls: "discord-rpc-placeholder-list" });
+
+		const placeholders = {
+			"{{vault}}": "Name of the vault",
+			"{{noteCount}}": "Total number of notes in the vault",
+			"{{fileName}}": "Name of the current file",
+			"{{fileExtension}}": "Extension of the current file",
+			"{{filePath}}": "Path of the current file",
+			"{{folder}}": "Name of the parent folder",
+			"{{creationDate}}": "Creation date of the current file",
+			"{{wordCount}}": "Word count of the current file",
+			"{{charCount}}": "Character count of the current file"
+		};
+
+		for (const [placeholder, description] of Object.entries(placeholders)) {
+			const li = placeholderList.createEl("li");
+			li.createEl("b", { text: placeholder });
+			li.appendText(`: ${description}`);
+		}
 
 		new Setting(containerEl)
 			.setName("Details")
