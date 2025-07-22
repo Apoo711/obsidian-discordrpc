@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type NewDiscordRPC from "./main";
+import type NewDiscordRPC from "main";
 
 export interface DiscordRPCSettings {
 	details: string;
